@@ -1,0 +1,22 @@
+{
+  "name": "chess-engine-web-ui",
+  "authors": [
+    "Gareth George <garethgeorge97@gmail.com>"
+  ],
+  "description": "a web ui for gareth george's chess engine",
+  "main": "",
+  "moduleType": [],
+  "homepage": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "jquery": "^2.2.3",
+    "bootstrap": "^3.3.6"
+  }
+}

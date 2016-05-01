@@ -1,0 +1,145 @@
+<html>
+
+<head>
+	<title>Chess Engine</title>
+	<link rel='stylesheet' href='./bower_components/bootstrap/dist/css/bootstrap.min.css'>
+	<script src='./bower_components/jquery/dist/jquery.min.js'></script>
+	<script src='./bower_components/bootstrap/dist/js/bootstrap.min.js'></script>
+
+	<link rel='stylesheet' href='./css/chessboard.css'>
+	<script src='./js/chessboard.js'></script>
+
+	<link rel='stylesheet' href='./css/index.css'>
+</head>
+
+<body>
+	<div class="page-header">
+		<h1>Chess Engine <em>v2</em> <small>by Gareth George</small></h1>
+
+		<div id="pick-side" class="panel panel-default">
+			<div class="panel-heading"><strong>PICK SIDE</strong></div>
+			<div class="panel-body">
+				<p>Please select a team</p>
+				<button type="button" class="btn btn-default" onclick="ui.setSide('black')">Black</button>
+				<button type="button" class="btn btn-default" onclick="ui.setSide('white')">White</button>
+			</div>
+		</div>
+
+		<div id="chess-board" class="panel panel-default">
+			<div class="panel-heading"><strong>PLAY CHESS!</strong></div>
+			<div class="panel-body">
+				<p>Playing as <strong id='side-name'></strong></p>
+				<p><strong id='current-turn'></strong>'s turn</p>
+				<div id="board" style="width: 600px"></div>
+			</div>
+		</div>
+	</div>
+</body>
+
+<script>
+var ui = {
+	board: null,
+	side: null
+};
+ui.setSide = function setSide(side) {
+	ui.side = side;
+	ui.currentTurn = 'black';
+
+	ui.toggleTurn = function() {
+		if (ui.currentTurn === 'black') 
+			ui.currentTurn = 'white'; 
+		else 
+			ui.currentTurn = 'black';
+		$('#current-turn').text(ui.currentTurn);
+	}
+	ui.toggleTurn();
+
+	$('#side-name').text(side);
+	$('#pick-side').hide();
+	$('#chess-board').show();
+
+
+	var cfg = {
+		draggable: true,
+		dropOffBoard: 'snapback', // this is the default
+		position: 'start',
+		orientation: ui.side,
+		onDragStart: function(source, piece, position, orientation) {
+			if (orientation != ui.currentTurn) return false;
+			if ((orientation === 'white' && piece.search(/^w/) === -1) ||
+				(orientation === 'black' && piece.search(/^b/) === -1)) {
+				return false;
+			}
+		},
+		onDrop: function(source, target, piece, newPos, oldPos, orientation) {
+			if (source == target) return ;
+
+			console.log("Source: " + source);
+			console.log("Target: " + target);
+			console.log("Piece: " + piece);
+			console.log("New position: " + ChessBoard.objToFen(newPos));
+			console.log("Old position: " + ChessBoard.objToFen(oldPos));
+			console.log("Orientation: " + orientation);
+			console.log("--------------------");
+
+			ui.toggleTurn();
+
+			setTimeout(function() {
+
+				console.log('start position: ' + board.position());
+
+				$.ajax({
+					type: 'POST',
+					url: '/ai',
+					data: JSON.stringify({
+							turn: ui.currentTurn,
+							position: board.position()
+						}), 
+					success: function(data) {
+						console.log('server move: ' + data);
+						board.position(data);
+						ui.toggleTurn();
+					},
+					contentType: "application/json",
+					dataType: 'json'
+				});
+
+			}, 100);
+
+
+		}
+	};
+	var board = ChessBoard('board', cfg);
+
+	if (ui.currentTurn != ui.side) {
+		setTimeout(function() {
+			$.ajax({
+				type: 'POST',
+				url: '/ai',
+				data: JSON.stringify({
+						turn: ui.currentTurn,
+						position: board.position()
+					}), 
+				success: function(data) {
+					console.log('server move: ' + data);
+					board.position(data);
+					ui.toggleTurn();
+				},
+				contentType: "application/json",
+				dataType: 'json'
+			});
+		}, 100);
+	}
+}
+
+
+
+$(function() {
+	$('#chess-board').hide();
+
+});
+
+
+</script>
+
+</html>
